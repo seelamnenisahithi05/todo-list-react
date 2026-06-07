@@ -4,11 +4,13 @@ import "./App.css";
 function App() {
   const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
+  const [date, setDate] = useState("");
   const [editId, setEditId] = useState(null);
 
   // Load tasks from localStorage
   useEffect(() => {
-    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const savedTasks =
+      JSON.parse(localStorage.getItem("tasks")) || [];
     setTasks(savedTasks);
   }, []);
 
@@ -21,94 +23,128 @@ function App() {
     if (!input.trim()) return;
 
     if (editId !== null) {
-      setTasks(
-        tasks.map((task) =>
-          task.id === editId ? { ...task, text: input } : task
-        )
-      );
+      const updatedTasks = [...tasks];
+
+      updatedTasks[editId].text = input;
+      updatedTasks[editId].date = date;
+
+      setTasks(updatedTasks);
       setEditId(null);
     } else {
       const newTask = {
-        id: Date.now(),
         text: input,
+        date: date,
         completed: false,
       };
+
       setTasks([...tasks, newTask]);
     }
 
     setInput("");
+    setDate("");
   };
 
-  const handleDelete = (id) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-  };
-
-  const handleEdit = (task) => {
-    setInput(task.text);
-    setEditId(task.id);
-  };
-
-  const toggleComplete = (id) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id
-          ? { ...task, completed: !task.completed }
-          : task
-      )
+  const handleDelete = (index) => {
+    const updatedTasks = tasks.filter(
+      (_, i) => i !== index
     );
+
+    setTasks(updatedTasks);
+  };
+
+  const handleEdit = (index) => {
+    setInput(tasks[index].text);
+    setDate(tasks[index].date);
+    setEditId(index);
+  };
+
+  const toggleComplete = (index) => {
+    const updatedTasks = [...tasks];
+
+    updatedTasks[index].completed =
+      !updatedTasks[index].completed;
+
+    setTasks(updatedTasks);
   };
 
   return (
     <div className="container">
-      <div className="todo-box">
-        <h1>Todo List</h1>
+      <h1>📝 To-Do App</h1>
 
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Enter task..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
+      <div className="input-section">
+        <input
+          type="text"
+          placeholder="Enter Task"
+          value={input}
+          onChange={(e) =>
+            setInput(e.target.value)
+          }
+        />
 
-          <button onClick={handleSubmit}>
-            {editId !== null ? "Update" : "Add"}
-          </button>
-        </div>
+        <input
+          type="datetime-local"
+          value={date}
+          onChange={(e) =>
+            setDate(e.target.value)
+          }
+        />
 
-        <ul className="task-list">
-          {tasks.map((task) => (
-            <li key={task.id} className="task-item">
-              <div className="task-content">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleComplete(task.id)}
-                />
+        <button onClick={handleSubmit}>
+          {editId !== null
+            ? "Update Task"
+            : "Add Task"}
+        </button>
+      </div>
 
-                <span className={task.completed ? "completed" : ""}>
-                  {task.text}
-                </span>
-              </div>
+      <div className="task-list">
+        {tasks.map((task, index) => (
+          <div className="task-item" key={index}>
+            <div>
+              <h3
+                style={{
+                  textDecoration: task.completed
+                    ? "line-through"
+                    : "none",
+                }}
+              >
+                {task.text}
+              </h3>
 
-              <div className="actions">
-                <button
-                  className="edit-btn"
-                  onClick={() => handleEdit(task)}
-                >
-                  Edit
-                </button>
+              <small>
+                {task.date || "No Date"}
+              </small>
+            </div>
 
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDelete(task.id)}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+            <div className="buttons">
+              <button
+                className="complete"
+                onClick={() =>
+                  toggleComplete(index)
+                }
+              >
+                ✓
+              </button>
+
+              <button
+                className="edit"
+                onClick={() =>
+                  handleEdit(index)
+                }
+              >
+                Edit
+              </button>
+
+              <button
+                className="delete"
+                onClick={() =>
+                  handleDelete(index)
+                }
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
